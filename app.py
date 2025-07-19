@@ -7,14 +7,13 @@ import geopandas as gpd
 
 st.set_page_config(page_title="Climate Digital Twin", layout="wide")
 
-# Title
 st.title("Climate Digital Twin: Ganga River (India)")
 
-# Load data
+# Loading data
 df = pd.read_csv("data/predicted_rainfall_temp.csv", encoding='utf-8-sig')
 df.columns = df.columns.str.strip()
 
-# Sidebar Year Selector
+# Year Selector
 min_year = int(df["Year"].min())
 max_year = int(df["Year"].max())
 year = st.slider("Select Year", min_year, max_year, step=1)
@@ -26,7 +25,7 @@ st.subheader(f"Climate for {year} ({selected_row['Source']})")
 st.metric("Rainfall (mm)", f"{selected_row['Rainfall_mm']:.2f}")
 st.metric("Temperature (°C)", f"{selected_row['Temperature_C']:.2f}")
 
-# Climate Trend Charts
+# Climate Trend Graphs
 st.header("Climate Trends")
 
 col1, col2 = st.columns(2)
@@ -61,7 +60,3 @@ folium.GeoJson(
 
 folium.LayerControl().add_to(m)
 st_data = st_folium(m, width=1000)
-
-# Footer
-st.markdown("---")
-st.caption("Climate Digital Twin | Riverathon 1.0 | Historical (1901–2015) + Predicted (2016–2050)")
