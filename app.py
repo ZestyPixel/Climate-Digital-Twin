@@ -3,40 +3,65 @@ import pandas as pd
 import plotly.express as px
 import folium
 from streamlit_folium import st_folium
+import geopandas as gpd
 
 st.set_page_config(page_title="Climate Digital Twin", layout="wide")
 
-st.title("🌍 Climate Digital Twin: Haridwar to Bhagalpur")
+# Title
+st.title("Climate Digital Twin: Ganga River (India)")
 
-year = st.slider("Select Year", 2000, 2050, step=5)
-
-df = pd.read_csv("data/rainfall_temp.csv", encoding='utf-8-sig')
+# Load data
+df = pd.read_csv("data/predicted_rainfall_temp.csv", encoding='utf-8-sig')
 df.columns = df.columns.str.strip()
-st.write("Columns:", df.columns.tolist())
 
-selected_row = df[df["Year"] == year]
+# Sidebar Year Selector
+min_year = int(df["Year"].min())
+max_year = int(df["Year"].max())
+year = st.slider("Select Year", min_year, max_year, step=1)
 
-st.header("📈 Climate Trends")
+selected_row = df[df["Year"] == year].iloc[0]
+
+# Climate Metrics
+st.subheader(f"Climate for {year} ({selected_row['Source']})")
+st.metric("Rainfall (mm)", f"{selected_row['Rainfall_mm']:.2f}")
+st.metric("Temperature (°C)", f"{selected_row['Temperature_C']:.2f}")
+
+# Climate Trend Charts
+st.header("Climate Trends")
+
 col1, col2 = st.columns(2)
 
-with col1:
-    fig1 = px.line(df, x="Year", y="Rainfall_mm", title="Rainfall Over Time (mm)")
-    st.plotly_chart(fig1, use_container_width=True)
+st.subheader("Rainfall Over Time (mm)")
+fig1 = px.line(df, x="Year", y="Rainfall_mm", title="Rainfall Over Time (mm)")
+st.plotly_chart(fig1, use_container_width=True)
 
-with col2:
-    fig2 = px.line(df, x="Year", y="Temperature_C", title="Temperature Over Time (°C)")
-    st.plotly_chart(fig2, use_container_width=True)
+st.subheader("🌡️ Temperature Over Time (°C)")
+fig2 = px.line(df, x="Year", y="Temperature_C", title="Temperature Over Time (°C)")
+st.plotly_chart(fig2, use_container_width=True)
 
-st.subheader(f"📊 Climate Projections for {year}")
-st.metric("Rainfall (mm)", int(selected_row['Rainfall_mm']))
-st.metric("Temperature (°C)", float(selected_row['Temperature_C']))
 
-st.header("🗺️ Ganga River Map Placeholder")
+
+
+# Map Visualization
+st.header("Ganga River Map(India)")
+
+gdf = gpd.read_file("data/ganga_stretch.geojson")
+
 m = folium.Map(location=[26.5, 83.0], zoom_start=6)
-folium.Marker(location=[29.95, 78.17], popup="Haridwar").add_to(m)
-folium.Marker(location=[25.25, 87.00], popup="Bhagalpur").add_to(m)
+
+folium.GeoJson(
+    gdf,
+    name="Ganga Stretch",
+    style_function=lambda x: {
+        "color": "blue",
+        "weight": 4,
+        "opacity": 0.8
+    }
+).add_to(m)
+
+folium.LayerControl().add_to(m)
 st_data = st_folium(m, width=1000)
 
 # Footer
 st.markdown("---")
-st.caption("Prototype | Climate Digital Twin | Riverathon 1.0")
+st.caption("Climate Digital Twin | Riverathon 1.0 | Historical (1901–2015) + Predicted (2016–2050)")
